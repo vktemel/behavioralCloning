@@ -1,18 +1,9 @@
-# Load GPU driver
-
-#from tensorflow.python.client import device_lib 
-#print(device_lib.list_local_devices())
-
-
 import pandas as pd
 import numpy as np
 import cv2
 
 drive_log = 'data/driving_log.csv'
 df_log = pd.read_csv(drive_log, names=['Center_Image', 'Left_Image', 'Right_Image', 'Steering', 'Throttle', 'Brake', 'Speed'])
-
-print(df_log.shape[0])
-print(df_log.Center_Image[0].split('\\')[-1])
 
 images = []
 measurements = []
@@ -33,8 +24,15 @@ for datapoint in range(df_log.shape[0]):
     images.append(cv2.imread(imgPath))
     measurements.append(df_log.Steering[datapoint]-correction)
 
-X_train = np.array(images)
-y_train = np.array(measurements)
+augmented_images, augmented_measurements = [], []
+for image,measurement in zip(images,measurements):
+    augmented_images.append(image)
+    augmented_measurements.append(measurement)
+    augmented_images.append(cv2.flip(image,1))
+    augmented_measurements.append(measurement*-1.0)
+
+X_train = np.array(augmented_images)
+y_train = np.array(augmented_measurements)
 
 from keras.models import Model, Sequential
 from keras.layers import Flatten, Dense, Lambda, Cropping2D
