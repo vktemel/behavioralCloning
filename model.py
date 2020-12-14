@@ -20,9 +20,18 @@ for datapoint in range(df_log.shape[0]):
     imgName = df_log.Center_Image[datapoint].split('\\')[-1]
     imgPath = 'data\\IMG\\' + imgName
     images.append(cv2.imread(imgPath))
-
     measurements.append(df_log.Steering[datapoint])
 
+    correction = 0.2
+    imgName = df_log.Left_Image[datapoint].split('\\')[-1]
+    imgPath = 'data\\IMG\\' + imgName
+    images.append(cv2.imread(imgPath))
+    measurements.append(df_log.Steering[datapoint] + correction)
+
+    imgName = df_log.Right_Image[datapoint].split('\\')[-1]
+    imgPath = 'data\\IMG\\' + imgName
+    images.append(cv2.imread(imgPath))
+    measurements.append(df_log.Steering[datapoint]-correction)
 
 X_train = np.array(images)
 y_train = np.array(measurements)
@@ -36,6 +45,14 @@ model.add(Dense(1))
 
 model.compile(loss='mse', optimizer='adam')
 
-model.fit(X_train, y_train, validation_split = 0.2, shuffle = True, epochs = 7)
+history_object = model.fit(X_train, y_train, validation_split = 0.2, shuffle = True, epochs = 5)
 
 model.save('model.h5')
+
+plt.plot(history_object.history['loss'])
+plt.plot(history_object.history['val_loss'])
+plt.title('model mean squared error loss')
+plt.ylabel('mean squared error loss')
+plt.xlabel('epoch')
+plt.legend(['training set', 'validation set'], loc='upper right')
+plt.show()
