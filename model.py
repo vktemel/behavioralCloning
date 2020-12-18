@@ -52,6 +52,21 @@ os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 drive_log = 'data/driving_log.csv'
 df_log = pd.read_csv(drive_log, names=['Center_Image', 'Left_Image', 'Right_Image', 'Steering', 'Throttle', 'Brake', 'Speed'])
 
+df_log.Center_Image = df_log.Center_Image.apply(lambda x: x.split('\\')[-1])
+df_log.Left_Image = df_log.Left_Image.apply(lambda x: x.split('\\')[-1])
+df_log.Right_Image = df_log.Right_Image.apply(lambda x: x.split('\\')[-1])
+
+df_log.drop(columns=['Throttle', 'Brake', 'Speed'], inplace=True)
+
+df_new = pd.DataFrame()
+
+correction = 0.2
+leftSteering = df_log.Steering + correction
+rightSteering = df_log.Steering - correction
+
+df_new['img_path'] = pd.concat([df_log.Center_Image, df_log.Left_Image, df_log.Right_Image], ignore_index=True)
+df_new['steering'] = pd.concat([df_log.Steering, leftSteering, rightSteering], ignore_index=True)
+
 images = []
 measurements = []
 for datapoint in range(df_log.shape[0]):
@@ -61,7 +76,6 @@ for datapoint in range(df_log.shape[0]):
     images.append(cv2.imread(imgPath))
     measurements.append(df_log.Steering[datapoint])
 
-    correction = 0.2
     imgName = df_log.Left_Image[datapoint].split('\\')[-1]
     imgPath = 'data\\IMG\\' + imgName
     images.append(cv2.imread(imgPath))
