@@ -60,6 +60,16 @@ log_path = data_folder + 'driving_log.csv'
 column_names = ['Center_Image', 'Left_Image', 'Right_Image', 'Steering', 'Throttle', 'Brake', 'Speed']
 df_log = pd.read_csv(log_path, names=column_names)
 
+# Data Evaluation
+print(df_log.shape)
+print(df_log.describe())
+plt.figure()
+df_log.Steering.plot(kind='hist')
+plt.ylabel('Samples')
+plt.xlabel('Steering')
+plt.savefig('images\\steeringhist.png')
+plt.close()
+
 # Isolate image name for center, left and right images
 df_log.Center_Image = df_log.Center_Image.apply(lambda x: x.split('\\')[-1])
 df_log.Left_Image = df_log.Left_Image.apply(lambda x: x.split('\\')[-1])
@@ -112,7 +122,6 @@ model.add(Convolution2D(48, kernel_size=(5,5), strides=(2,2), activation='relu')
 model.add(Convolution2D(64, kernel_size=(3,3), activation='relu'))
 model.add(Convolution2D(64, kernel_size=(3,3), activation='relu'))
 model.add(Flatten())
-model.add(Dense(1164))
 model.add(Dense(100))
 model.add(Dense(50))
 model.add(Dense(10))
@@ -121,10 +130,13 @@ model.add(Dense(1))
 # Compile the model
 model.compile(loss='mse', optimizer='adam')
 
+# Print summary
+print(model.summary())
+
 checkpointpath = 'tmp'
 # Set the callbacks
 my_callbacks=  [
-    EarlyStopping(monitor = 'val_loss', patience=3),
+    EarlyStopping(monitor = 'val_loss', patience=1),
     ModelCheckpoint(filepath=checkpointpath, monitor='val_loss', save_best_only=True)
 ]
                            
@@ -138,13 +150,14 @@ history_object = model.fit(x=train_generator, \
                            callbacks=my_callbacks)
 
 
+plt.figure()
 plt.plot(history_object.history['loss'])
 plt.plot(history_object.history['val_loss'])
 plt.title('model mean squared error loss')
 plt.ylabel('mean squared error loss')
 plt.xlabel('epoch')
 plt.legend(['training set', 'validation set'], loc='upper right')
-plt.savefig('loss.png', bbox_inches='tight')
+plt.savefig('images\\loss.png', bbox_inches='tight')
 
 # Save the model
 model.save('model.h5')
